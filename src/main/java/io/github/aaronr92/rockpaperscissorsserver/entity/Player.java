@@ -21,9 +21,13 @@ public class Player {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private long id;
+
     private String login;
+
     private String password;
+
     private LocalDateTime lastLogin;
+
     private LocalDate registrationDate;
 
 }
