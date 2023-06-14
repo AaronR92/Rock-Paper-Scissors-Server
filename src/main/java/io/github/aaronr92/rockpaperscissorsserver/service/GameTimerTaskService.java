@@ -1,6 +1,7 @@
 package io.github.aaronr92.rockpaperscissorsserver.service;
 
 import com.esotericsoftware.kryonet.Connection;
+import io.github.aaronr92.rockpaperscissorsserver.component.EventPublisher;
 import io.github.aaronr92.rockpaperscissorsserver.packet.server.ServerboundRemainingTimePacket;
 import io.github.aaronr92.rockpaperscissorsserver.util.GameTimerTask;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ public class GameTimerTaskService {
 
     public static final Map<Long, GameTimerTask> taskMap = new HashMap<>();
     private final ThreadPoolTaskScheduler taskScheduler;
+    private final EventPublisher eventPublisher;
 
     /**
      * Closes connection after specified delay
@@ -149,6 +151,15 @@ public class GameTimerTaskService {
                     @Override
                     public void run() {
                         connection.sendTCP(new ServerboundRemainingTimePacket(remainingTime));
+
+                        var task = new GameTimerTask(1) {
+                            @Override
+                            public void run() {
+                                eventPublisher.publishTimeExpiredEvent(playerId, connection);
+                                taskMap.remove(playerId);
+                            }
+                        };
+                        taskScheduler.schedule(task, Instant.now().plusSeconds(task.getRemainingTime()));
                     }
                 };
                 taskScheduler.schedule(task, Instant.now().plusSeconds(task.getRemainingTime()));

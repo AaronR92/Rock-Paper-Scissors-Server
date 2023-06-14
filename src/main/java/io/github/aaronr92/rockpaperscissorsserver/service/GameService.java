@@ -5,6 +5,7 @@ import io.github.aaronr92.rockpaperscissorsserver.entity.Game;
 import io.github.aaronr92.rockpaperscissorsserver.packet.server.ServerboundConnectionPacket;
 import io.github.aaronr92.rockpaperscissorsserver.packet.server.ServerboundGameEndPacket;
 import io.github.aaronr92.rockpaperscissorsserver.packet.server.ServerboundGameStartPacket;
+import io.github.aaronr92.rockpaperscissorsserver.packet.server.ServerboundServerChoicePacket;
 import io.github.aaronr92.rockpaperscissorsserver.repository.GameDAO;
 import io.github.aaronr92.rockpaperscissorsserver.util.FinishState;
 import io.github.aaronr92.rockpaperscissorsserver.util.GameStepAction;
@@ -79,13 +80,17 @@ public class GameService {
             var serverAction = getServerAction();
             System.out.println("Server action is "+ serverAction);
             game.setGameStep1Server(serverAction);
+
             timerTaskService.updateTimerTask(playerId, connection);
+            sendRoundResultToPlayer(serverAction, connection);
         } else if (game.getGameStep2Player() == null) {
             game.setGameStep2Player(action);
             var serverAction = getServerAction();
             System.out.println("Server action is "+ serverAction);
             game.setGameStep2Server(serverAction);
+
             timerTaskService.updateTimerTask(playerId, connection);
+            sendRoundResultToPlayer(serverAction, connection);
         } else if (game.getGameStep3Player() == null) {
             game.setGameStep3Player(action);
             var serverAction = getServerAction();
@@ -95,8 +100,32 @@ public class GameService {
 
             var result = calculateWinner(game);
             game.setFinishState(result);
-            connection.sendTCP(new ServerboundGameEndPacket(result));
-            timerTaskService.closeConnectionAfter(connection, 5);
+            sendRoundResultToPlayer(serverAction, connection);
+            sendGameResultToPlayer(result, connection);
+        }
+
+        gameRepo.save(game);
+    }
+
+    public void skipRound(long playerId, Connection connection) {
+        var player = playerService.getPlayerById(playerId);
+        var game = gameRepo.findFirstByPlayerOrderByIdDesc(player).get();
+
+        if (game.getGameStep1Player() == null) {
+            game.setGameStep1Player(GameStepAction.PAPER);
+            game.setGameStep1Server(GameStepAction.SCISSORS);
+            timerTaskService.updateTimerTask(playerId, connection);
+        } else if (game.getGameStep2Player() == null) {
+            game.setGameStep2Player(GameStepAction.PAPER);
+            game.setGameStep2Server(GameStepAction.SCISSORS);
+            timerTaskService.updateTimerTask(playerId, connection);
+        } else if (game.getGameStep3Player() == null) {
+            game.setGameStep3Player(GameStepAction.PAPER);
+            game.setGameStep3Server(GameStepAction.SCISSORS);
+            timerTaskService.updateTimerTask(playerId, connection);
+            var result = calculateWinner(game);
+            game.setFinishState(result);
+            sendGameResultToPlayer(result, connection);
         }
 
         gameRepo.save(game);
@@ -115,6 +144,15 @@ public class GameService {
         game.setRemainingTime(task.getRemainingTime());
 
         gameRepo.save(game);
+    }
+
+    private void sendGameResultToPlayer(FinishState result, Connection connection) {
+        connection.sendTCP(new ServerboundGameEndPacket(result));
+        timerTaskService.closeConnectionAfter(connection, 5);
+    }
+
+    private void sendRoundResultToPlayer(GameStepAction serverAction, Connection connection) {
+        connection.sendTCP(new ServerboundServerChoicePacket(serverAction));
     }
 
     private GameStepAction getServerAction() {

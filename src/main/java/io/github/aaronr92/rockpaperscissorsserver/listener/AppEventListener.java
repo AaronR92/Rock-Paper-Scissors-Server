@@ -1,9 +1,6 @@
 package io.github.aaronr92.rockpaperscissorsserver.listener;
 
-import io.github.aaronr92.rockpaperscissorsserver.event.ConnectionEvent;
-import io.github.aaronr92.rockpaperscissorsserver.event.DisconnectionEvent;
-import io.github.aaronr92.rockpaperscissorsserver.event.GameStartEvent;
-import io.github.aaronr92.rockpaperscissorsserver.event.PlayerGameStepActionEvent;
+import io.github.aaronr92.rockpaperscissorsserver.event.*;
 import io.github.aaronr92.rockpaperscissorsserver.packet.server.ServerboundConnectionPacket;
 import io.github.aaronr92.rockpaperscissorsserver.service.GameService;
 import io.github.aaronr92.rockpaperscissorsserver.service.PlayerService;
@@ -39,7 +36,12 @@ public class AppEventListener {
 
     @EventListener
     public void onGameStart(GameStartEvent event) {
-        gameService.startGame(event.login(), event.password(), event.connection());
+        gameService.startGame(
+                event.login(),
+                event.password(),
+                event.playerRemoteAddress(),
+                event.connection()
+        );
     }
 
     @EventListener
@@ -49,6 +51,11 @@ public class AppEventListener {
                 event.gameStepAction(),
                 event.connection()
         );
+    }
+
+    @EventListener
+    public void onTimeExpired(TimeExpiredEvent event) {
+        gameService.skipRound(event.playerId(), event.connection());
     }
 
 }

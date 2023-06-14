@@ -1,10 +1,7 @@
 package io.github.aaronr92.rockpaperscissorsserver.component;
 
 import com.esotericsoftware.kryonet.Connection;
-import io.github.aaronr92.rockpaperscissorsserver.event.ConnectionEvent;
-import io.github.aaronr92.rockpaperscissorsserver.event.DisconnectionEvent;
-import io.github.aaronr92.rockpaperscissorsserver.event.GameStartEvent;
-import io.github.aaronr92.rockpaperscissorsserver.event.PlayerGameStepActionEvent;
+import io.github.aaronr92.rockpaperscissorsserver.event.*;
 import io.github.aaronr92.rockpaperscissorsserver.util.GameStepAction;
 import lombok.AllArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -58,6 +55,14 @@ public class EventPublisher {
                 gameStepAction,
                 connection
         );
+        eventPublisher.publishEvent(event);
+    }
+
+    public void publishTimeExpiredEvent(
+            long playerId,
+            Connection connection
+    ) {
+        var event = new TimeExpiredEvent(playerId, connection);
         eventPublisher.publishEvent(event);
     }
 
