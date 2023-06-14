@@ -13,6 +13,7 @@ public class ConnectionEvent {
 
     private String login;
     private String password;
+    private boolean needsRegistration;
     private Connection connection;
 
 }

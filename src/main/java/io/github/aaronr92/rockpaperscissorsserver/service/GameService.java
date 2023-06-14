@@ -11,6 +11,8 @@ import io.github.aaronr92.rockpaperscissorsserver.util.GameStepAction;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 @Service
@@ -20,10 +22,17 @@ public class GameService {
     private final GameDAO gameRepo;
     private final PlayerService playerService;
     private final GameTimerTaskService timerTaskService;
+
     private final Random random = new Random();
     private final GameStepAction[] actions = GameStepAction.values();
+    private final Map<String, Long> playersMap = new HashMap<>();
 
-    public void startGame(String login, String password, Connection connection) {
+    public void startGame(
+            String login,
+            String password,
+            String playerRemoteAddress,
+            Connection connection
+    ) {
         var playerOptional = playerService.getPlayerByLoginAndPassword(login, password);
 
         if (playerOptional.isEmpty()) {
@@ -37,6 +46,8 @@ public class GameService {
             var currentGame = currentGameOptional.get();
             if (currentGame.getFinishState() == null) {
                 continueGame(currentGame, player.getId(), connection);
+
+                playersMap.put(playerRemoteAddress, player.getId());
                 return;
             }
         }
@@ -48,6 +59,8 @@ public class GameService {
 
         connection.sendTCP(new ServerboundGameStartPacket(player.getId()));
         timerTaskService.createTimerTask(player.getId(), connection);
+
+        playersMap.put(playerRemoteAddress, player.getId());
 
         gameRepo.save(game);
     }
@@ -81,9 +94,27 @@ public class GameService {
             timerTaskService.removeTimerTask(playerId);
 
             var result = calculateWinner(game);
+            game.setFinishState(result);
             connection.sendTCP(new ServerboundGameEndPacket(result));
             timerTaskService.closeConnectionAfter(connection, 5);
         }
+
+        gameRepo.save(game);
+    }
+
+    public void disconnect(String playerRemoteAddress) {
+        long playerId = playersMap.get(playerRemoteAddress);
+        var player = playerService.getPlayerById(playerId);
+
+        if (!timerTaskService.isPlayerInGame(playerId))
+            return;
+
+        var task = timerTaskService.removeTimerTask(playerId);
+
+        Game game = gameRepo.findFirstByPlayerOrderByIdDesc(player).get();
+        game.setRemainingTime(task.getRemainingTime());
+
+        gameRepo.save(game);
     }
 
     private GameStepAction getServerAction() {
@@ -121,5 +152,4 @@ public class GameService {
 
         return FinishState.DEFEAT;
     }
-
 }

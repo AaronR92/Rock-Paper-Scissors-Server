@@ -5,6 +5,7 @@ import io.github.aaronr92.rockpaperscissorsserver.repository.PlayerDAO;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -20,10 +21,27 @@ public class PlayerService {
      * @param password password of a player
      * @return result (authenticated or bad_credentials)
      */
-    public String signIn(String login, String password) {
-        var player = playerRepo.findPlayerByLoginAndPassword(login, password);
+    public String signIn(String login, String password, boolean needsRegistration) {
+        var playerOptional = playerRepo.findPlayerByLoginAndPassword(login, password);
+        boolean isPresent = playerOptional.isPresent();
 
-        return player.isPresent() ? "authenticated" : "bad_credentials";
+        if (isPresent) {
+            var player = playerOptional.get();
+            player.setLastLogin(LocalDateTime.now());
+            playerRepo.save(player);
+        } else if (needsRegistration) {
+            var now = LocalDateTime.now();
+            var player = Player.builder()
+                    .login(login)
+                    .password(password)
+                    .lastLogin(now)
+                    .registrationDate(now.toLocalDate())
+                    .build();
+            playerRepo.save(player);
+            isPresent = true;
+        }
+
+        return isPresent ? "authenticated" : "bad_credentials";
     }
 
     public Optional<Player> getPlayerByLoginAndPassword(String login, String password) {

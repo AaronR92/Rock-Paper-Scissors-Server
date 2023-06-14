@@ -4,7 +4,8 @@ import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
 import io.github.aaronr92.rockpaperscissorsserver.component.EventPublisher;
 import io.github.aaronr92.rockpaperscissorsserver.packet.client.ClientboundConnectionPacket;
-import io.github.aaronr92.rockpaperscissorsserver.packet.Packet;
+import io.github.aaronr92.rockpaperscissorsserver.packet.client.ClientboundGameStartPacket;
+import io.github.aaronr92.rockpaperscissorsserver.packet.client.ClientboundPlayerGameStepActionPacket;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,16 +26,46 @@ public class PacketListener extends Listener {
             eventPublisher.publishConnectionEvent(
                     packet.login(),
                     packet.password(),
+                    packet.needsRegistration(),
                     connection
             );
-        } else if (receivedPacket instanceof Packet packet) {
-            LOG.info(String.valueOf(packet));
+        } else if (receivedPacket instanceof ClientboundGameStartPacket packet) {
+            eventPublisher.publishGameStartEvent(
+                    packet.login(),
+                    packet.password(),
+                    connection,
+                    buildAddressString(connection)
+            );
+        } else if (receivedPacket instanceof ClientboundPlayerGameStepActionPacket packet) {
+            eventPublisher.publishPlayerGameActionEvent(
+                    packet.playerId(),
+                    packet.action(),
+                    connection
+            );
         }
     }
 
     @Override
     public void connected(Connection connection) {
-        LOG.info("New connection at {}", connection.getRemoteAddressTCP());
+        LOG.info("New connection {}", connection.getRemoteAddressTCP());
     }
 
+    @Override
+    public void disconnected(Connection connection) {
+        eventPublisher.publishDisconnectionEvent(
+                buildAddressString(connection)
+        );
+    }
+
+    private String buildAddressString(Connection connection) {
+        var remoteTcp = connection.getRemoteAddressTCP();
+        return buildAddressString(
+                remoteTcp.getAddress().getHostAddress(),
+                remoteTcp.getPort()
+        );
+    }
+
+    private String buildAddressString(String hostAddress, int port) {
+        return hostAddress + ":" + port;
+    }
 }

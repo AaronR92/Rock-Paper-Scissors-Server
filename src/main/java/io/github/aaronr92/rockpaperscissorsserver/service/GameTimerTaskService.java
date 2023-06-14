@@ -31,11 +31,22 @@ public class GameTimerTaskService {
     }
 
     /**
+     * Checks whether player in taskMap or not
+     * @param playerId id of player that plays game
+     * @return true if still in game
+     */
+    public boolean isPlayerInGame(long playerId) {
+        return taskMap.containsKey(playerId);
+    }
+
+    /**
      * Removes and cancels timer
      * @param playerId id of player that plays game
      */
-    public void removeTimerTask(final long playerId) {
-        taskMap.remove(playerId).cancel();
+    public GameTimerTask removeTimerTask(final long playerId) {
+        var task = taskMap.remove(playerId);
+        task.cancel();
+        return task;
     }
 
     /**

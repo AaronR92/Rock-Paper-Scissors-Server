@@ -3,11 +3,10 @@ package io.github.aaronr92.rockpaperscissorsserver.config;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryonet.Server;
 import io.github.aaronr92.rockpaperscissorsserver.listener.PacketListener;
-import io.github.aaronr92.rockpaperscissorsserver.packet.Packet;
 import io.github.aaronr92.rockpaperscissorsserver.packet.client.ClientboundConnectionPacket;
-import io.github.aaronr92.rockpaperscissorsserver.packet.server.ServerboundConnectionPacket;
-import lombok.AllArgsConstructor;
-import org.slf4j.Logger;
+import io.github.aaronr92.rockpaperscissorsserver.packet.client.ClientboundGameStartPacket;
+import io.github.aaronr92.rockpaperscissorsserver.packet.client.ClientboundPlayerGameStepActionPacket;
+import io.github.aaronr92.rockpaperscissorsserver.packet.server.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,9 +31,14 @@ public class TcpServerConfig {
         Kryo kryo = server.getKryo();
 
         kryo.register(ClientboundConnectionPacket.class);
-        kryo.register(ServerboundConnectionPacket.class);
+        kryo.register(ClientboundGameStartPacket.class);
+        kryo.register(ClientboundPlayerGameStepActionPacket.class);
 
-        kryo.register(Packet.class);
+        kryo.register(ServerboundConnectionPacket.class);
+        kryo.register(ServerboundGameEndPacket.class);
+        kryo.register(ServerboundGameStartPacket.class);
+        kryo.register(ServerboundRemainingTimePacket.class);
+        kryo.register(ServerboundServerChoicePacket.class);
 
         server.addListener(packetListener);
 
