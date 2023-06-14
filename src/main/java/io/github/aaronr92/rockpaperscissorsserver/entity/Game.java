@@ -3,15 +3,13 @@ package io.github.aaronr92.rockpaperscissorsserver.entity;
 import io.github.aaronr92.rockpaperscissorsserver.util.FinishState;
 import io.github.aaronr92.rockpaperscissorsserver.util.GameStepAction;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter @Setter
+@Builder
 public class Game {
 
     @Id
@@ -23,13 +21,24 @@ public class Game {
     private Player player;
 
     @Enumerated(EnumType.STRING)
-    private GameStepAction gameStep1;
+    private GameStepAction gameStep1Player;
 
     @Enumerated(EnumType.STRING)
-    private GameStepAction gameStep2;
+    private GameStepAction gameStep1Server;
 
     @Enumerated(EnumType.STRING)
-    private GameStepAction gameStep3;
+    private GameStepAction gameStep2Player;
+
+    @Enumerated(EnumType.STRING)
+    private GameStepAction gameStep2Server;
+
+    @Enumerated(EnumType.STRING)
+    private GameStepAction gameStep3Player;
+
+    @Enumerated(EnumType.STRING)
+    private GameStepAction gameStep3Server;
+
+    private int remainingTime;
 
     @Enumerated(EnumType.STRING)
     private FinishState finishState;
