@@ -17,7 +17,7 @@ spring:
 
 ## Compile
 1. Go to project folder using ``cd``
-2. Compile ``./mvnw``
+2. Compile ``./mvnw package``
 
 ## Run
 1. Go to ``target`` folder if you ran compile commands
