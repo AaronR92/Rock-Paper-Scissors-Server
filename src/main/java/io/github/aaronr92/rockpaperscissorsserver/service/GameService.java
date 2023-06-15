@@ -160,6 +160,8 @@ public class GameService {
     private void sendGameResultToPlayer(FinishState result, Connection connection) {
         connection.sendTCP(new ServerboundGameEndPacket(result));
         timerTaskService.closeConnectionAfter(connection, 5);
+        // Not wasting resources while player in menu
+        connection.close();
     }
 
     private void sendRoundResultToPlayer(GameStepAction serverAction, Connection connection) {
