@@ -1,5 +1,5 @@
 # Rock-Paper-Scissors Server 🪨-📄-✂️
-Spring and Kryonet server application
+Spring and Kryonet server application  
 To play the game you also need to download [client](https://github.com/AaronR92/Rock-Paper-Scissors-Client)
 
 ## Configuration
