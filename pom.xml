@@ -10,9 +10,9 @@
     </parent>
     <groupId>io.github.aaronr92</groupId>
     <artifactId>rock-paper-scissors-server</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.1</version>
     <name>rock-paper-scissors-server</name>
-    <description>rock-paper-scissors-server</description>
+    <description>Game client for rock-paper-scissors-server</description>
     <properties>
         <java.version>17</java.version>
     </properties>
