@@ -94,7 +94,10 @@ public class GameService {
             game.setGameStep3Player(action);
             var serverAction = getServerAction();
             game.setGameStep3Server(serverAction);
-            timerTaskService.removeTimerTask(playerId);
+
+            try {
+                timerTaskService.removeTimerTask(playerId);
+            } catch (Exception ignored) {}
 
             var result = calculateWinner(game);
             game.setFinishState(result);
@@ -112,17 +115,27 @@ public class GameService {
         if (game.getGameStep1Player() == null) {
             game.setGameStep1Player(GameStepAction.PAPER);
             game.setGameStep1Server(GameStepAction.SCISSORS);
+
+            sendRoundResultToPlayer(null, connection);
             timerTaskService.updateTimerTask(playerId, connection);
         } else if (game.getGameStep2Player() == null) {
             game.setGameStep2Player(GameStepAction.PAPER);
             game.setGameStep2Server(GameStepAction.SCISSORS);
+
+            sendRoundResultToPlayer(null, connection);
             timerTaskService.updateTimerTask(playerId, connection);
         } else if (game.getGameStep3Player() == null) {
             game.setGameStep3Player(GameStepAction.PAPER);
             game.setGameStep3Server(GameStepAction.SCISSORS);
-            timerTaskService.updateTimerTask(playerId, connection);
+
+            try {
+                timerTaskService.removeTimerTask(playerId);
+            } catch (Exception ignored) {}
+
             var result = calculateWinner(game);
             game.setFinishState(result);
+
+            sendRoundResultToPlayer(null, connection);
             sendGameResultToPlayer(result, connection);
         }
 

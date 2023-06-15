@@ -62,7 +62,9 @@ public class GameTimerTaskService {
             final long playerId,
             final Connection connection
     ) {
-        var result = taskMap.remove(playerId).getFirst().cancel(true);
+        try {
+            taskMap.remove(playerId).getFirst().cancel(true);
+        } catch (Exception ignored) {}
         createTimerTask(playerId, connection);
     }
 
