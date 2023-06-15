@@ -17,7 +17,6 @@ public class AppEventListener {
 
     @EventListener
     public void onConnection(ConnectionEvent event) {
-        System.out.println(event.getLogin() + " " + event.getPassword());
         var result = playerService.signIn(
                 event.getLogin(),
                 event.getPassword(),
@@ -31,7 +30,7 @@ public class AppEventListener {
 
     @EventListener
     public void onDisconnection(DisconnectionEvent event) {
-        gameService.disconnect(event.playerRemoteAddress());
+        gameService.disconnect(event.connectionId());
     }
 
     @EventListener
@@ -39,7 +38,7 @@ public class AppEventListener {
         gameService.startGame(
                 event.login(),
                 event.password(),
-                event.playerRemoteAddress(),
+                event.connectionId(),
                 event.connection()
         );
     }

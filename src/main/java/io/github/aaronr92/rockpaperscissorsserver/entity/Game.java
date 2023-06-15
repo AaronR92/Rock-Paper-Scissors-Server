@@ -13,7 +13,8 @@ import lombok.*;
 public class Game {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(generator = "gameSeq")
+    @SequenceGenerator(name = "gameSeq", sequenceName = "GAME_SEQ", allocationSize = 1)
     private long id;
 
     @ManyToOne

@@ -24,9 +24,9 @@ public class EventPublisher {
     }
 
     public void publishDisconnectionEvent(
-            final String playerRemoteAddress
+            final int connectionId
     ) {
-        var event = new DisconnectionEvent(playerRemoteAddress);
+        var event = new DisconnectionEvent(connectionId);
         eventPublisher.publishEvent(event);
     }
 
@@ -34,13 +34,13 @@ public class EventPublisher {
             final String login,
             final String password,
             final Connection connection,
-            final String playerRemoteAddress
+            final int connectionId
     ) {
         var event = new GameStartEvent(
                 login,
                 password,
                 connection,
-                playerRemoteAddress
+                connectionId
         );
         eventPublisher.publishEvent(event);
     }

@@ -6,5 +6,5 @@ public record GameStartEvent(
         String login,
         String password,
         Connection connection,
-        String playerRemoteAddress
+        int connectionId
 ) {}

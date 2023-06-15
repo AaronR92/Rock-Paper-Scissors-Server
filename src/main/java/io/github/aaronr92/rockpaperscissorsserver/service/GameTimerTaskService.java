@@ -5,18 +5,20 @@ import io.github.aaronr92.rockpaperscissorsserver.component.EventPublisher;
 import io.github.aaronr92.rockpaperscissorsserver.packet.server.ServerboundRemainingTimePacket;
 import io.github.aaronr92.rockpaperscissorsserver.util.GameTimerTask;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.util.Pair;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ScheduledFuture;
 
 @Service
 @RequiredArgsConstructor
 public class GameTimerTaskService {
 
-    public static final Map<Long, GameTimerTask> taskMap = new HashMap<>();
+    public static final Map<Long, Pair<ScheduledFuture<?>, GameTimerTask>> taskMap = new HashMap<>();
     private final ThreadPoolTaskScheduler taskScheduler;
     private final EventPublisher eventPublisher;
 
@@ -46,9 +48,9 @@ public class GameTimerTaskService {
      * @param playerId id of player that plays game
      */
     public GameTimerTask removeTimerTask(final long playerId) {
-        var task = taskMap.remove(playerId);
-        task.cancel();
-        return task;
+        var taskPair = taskMap.remove(playerId);
+        taskPair.getFirst().cancel(true);
+        return taskPair.getSecond();
     }
 
     /**
@@ -60,7 +62,7 @@ public class GameTimerTaskService {
             final long playerId,
             final Connection connection
     ) {
-        taskMap.remove(playerId).cancel();
+        var result = taskMap.remove(playerId).getFirst().cancel(true);
         createTimerTask(playerId, connection);
     }
 
@@ -91,79 +93,81 @@ public class GameTimerTaskService {
         // Looks like an absolute mess
         return switch (remainingTime) {
             case 30 -> {
-                var task = new GameTimerTask(remainingTime) {
+                connection.sendTCP(new ServerboundRemainingTimePacket(30));
+                var task = new GameTimerTask(15) {
                     @Override
                     public void run() {
-                        connection.sendTCP(new ServerboundRemainingTimePacket(remainingTime));
+                        taskMap.remove(playerId);
 
-                        createTimerTask(15, playerId, connection);
+                        createTimerTask(getRemainingTime(), playerId, connection);
                     }
                 };
-                taskScheduler.schedule(task, Instant.now().plusSeconds(task.getRemainingTime()));
-                taskMap.put(playerId, task);
+                var future = taskScheduler
+                        .schedule(task, Instant.now().plusSeconds(task.getRemainingTime()));
+                taskMap.put(playerId, Pair.of(future, task));
 
                 yield task;
             }
             case 15 -> {
-                var task = new GameTimerTask(remainingTime) {
+                connection.sendTCP(new ServerboundRemainingTimePacket(15));
+                var task = new GameTimerTask(5) {
                     @Override
                     public void run() {
-                        connection.sendTCP(new ServerboundRemainingTimePacket(remainingTime));
+                        taskMap.remove(playerId);
 
-                        createTimerTask(5, playerId, connection);
+                        createTimerTask(getRemainingTime(), playerId, connection);
                     }
                 };
-                taskScheduler.schedule(task, Instant.now().plusSeconds(task.getRemainingTime()));
-                taskMap.put(playerId, task);
+                var future = taskScheduler
+                         .schedule(task, Instant.now().plusSeconds(task.getRemainingTime()));
+                taskMap.put(playerId, Pair.of(future, task));
 
                 yield task;
             }
             case 5 -> {
-                var task = new GameTimerTask(remainingTime) {
+                connection.sendTCP(new ServerboundRemainingTimePacket(5));
+                var task = new GameTimerTask(3) {
                     @Override
                     public void run() {
-                        connection.sendTCP(new ServerboundRemainingTimePacket(remainingTime));
+                        taskMap.remove(playerId);
 
-                        createTimerTask(3, playerId, connection);
+                        createTimerTask(getRemainingTime(), playerId, connection);
                     }
                 };
-                taskScheduler.schedule(task, Instant.now().plusSeconds(task.getRemainingTime()));
-                taskMap.put(playerId, task);
+                var future = taskScheduler
+                        .schedule(task, Instant.now().plusSeconds(task.getRemainingTime()));
+                taskMap.put(playerId, Pair.of(future, task));
 
                 yield task;
             }
             case 3 -> {
-                var task = new GameTimerTask(remainingTime) {
+                connection.sendTCP(new ServerboundRemainingTimePacket(3));
+                var task = new GameTimerTask(1) {
                     @Override
                     public void run() {
+                        taskMap.remove(playerId);
                         connection.sendTCP(new ServerboundRemainingTimePacket(remainingTime));
 
-                        createTimerTask(1, playerId, connection);
+                        createTimerTask(getRemainingTime(), playerId, connection);
                     }
                 };
-                taskScheduler.schedule(task, Instant.now().plusSeconds(task.getRemainingTime()));
-                taskMap.put(playerId, task);
+                var future = taskScheduler
+                        .schedule(task, Instant.now().plusSeconds(task.getRemainingTime()));
+                taskMap.put(playerId, Pair.of(future, task));
 
                 yield task;
             }
             case 1 -> {
+                connection.sendTCP(new ServerboundRemainingTimePacket(1));
                 var task = new GameTimerTask(remainingTime) {
                     @Override
                     public void run() {
-                        connection.sendTCP(new ServerboundRemainingTimePacket(remainingTime));
-
-                        var task = new GameTimerTask(1) {
-                            @Override
-                            public void run() {
-                                eventPublisher.publishTimeExpiredEvent(playerId, connection);
-                                taskMap.remove(playerId);
-                            }
-                        };
-                        taskScheduler.schedule(task, Instant.now().plusSeconds(task.getRemainingTime()));
+                        taskMap.remove(playerId);
+                        eventPublisher.publishTimeExpiredEvent(playerId, connection);
                     }
                 };
-                taskScheduler.schedule(task, Instant.now().plusSeconds(task.getRemainingTime()));
-                taskMap.put(playerId, task);
+                taskScheduler
+                        .schedule(task, Instant.now().plusSeconds(task.getRemainingTime()));
 
                 yield task;
             }

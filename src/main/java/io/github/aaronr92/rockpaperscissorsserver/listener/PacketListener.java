@@ -21,7 +21,6 @@ public class PacketListener extends Listener {
 
     @Override
     public void received(Connection connection, Object receivedPacket) {
-        LOG.info("Packet received");
         if (receivedPacket instanceof ClientboundConnectionPacket packet) {
             eventPublisher.publishConnectionEvent(
                     packet.login(),
@@ -34,7 +33,7 @@ public class PacketListener extends Listener {
                     packet.login(),
                     packet.password(),
                     connection,
-                    buildAddressString(connection)
+                    connection.getID()
             );
         } else if (receivedPacket instanceof ClientboundPlayerGameStepActionPacket packet) {
             eventPublisher.publishPlayerGameActionEvent(
@@ -53,19 +52,7 @@ public class PacketListener extends Listener {
     @Override
     public void disconnected(Connection connection) {
         eventPublisher.publishDisconnectionEvent(
-                buildAddressString(connection)
+                connection.getID()
         );
-    }
-
-    private String buildAddressString(Connection connection) {
-        var remoteTcp = connection.getRemoteAddressTCP();
-        return buildAddressString(
-                remoteTcp.getAddress().getHostAddress(),
-                remoteTcp.getPort()
-        );
-    }
-
-    private String buildAddressString(String hostAddress, int port) {
-        return hostAddress + ":" + port;
     }
 }

@@ -7,6 +7,10 @@ import io.github.aaronr92.rockpaperscissorsserver.packet.client.ClientboundConne
 import io.github.aaronr92.rockpaperscissorsserver.packet.client.ClientboundGameStartPacket;
 import io.github.aaronr92.rockpaperscissorsserver.packet.client.ClientboundPlayerGameStepActionPacket;
 import io.github.aaronr92.rockpaperscissorsserver.packet.server.*;
+import io.github.aaronr92.rockpaperscissorsserver.util.FinishState;
+import io.github.aaronr92.rockpaperscissorsserver.util.GameStepAction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,6 +25,8 @@ public class TcpServerConfig {
 
     private final PacketListener packetListener;
 
+    private final Logger LOG = LoggerFactory.getLogger(TcpServerConfig.class);
+
     public TcpServerConfig(PacketListener packetListener) {
         this.packetListener = packetListener;
     }
@@ -30,10 +36,16 @@ public class TcpServerConfig {
         Server server = new com.esotericsoftware.kryonet.Server();
         Kryo kryo = server.getKryo();
 
+        // Classes
+        kryo.register(GameStepAction.class);
+        kryo.register(FinishState.class);
+
+        // Clientbound packets
         kryo.register(ClientboundConnectionPacket.class);
         kryo.register(ClientboundGameStartPacket.class);
         kryo.register(ClientboundPlayerGameStepActionPacket.class);
 
+        // Serverbount packets
         kryo.register(ServerboundConnectionPacket.class);
         kryo.register(ServerboundGameEndPacket.class);
         kryo.register(ServerboundGameStartPacket.class);
@@ -45,7 +57,7 @@ public class TcpServerConfig {
         try {
             server.bind(tcpPort);
             server.start();
-            System.out.println("TCP server started!");
+            LOG.info("TCP server started");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

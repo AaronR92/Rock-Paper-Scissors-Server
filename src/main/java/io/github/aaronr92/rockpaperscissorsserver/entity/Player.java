@@ -1,9 +1,6 @@
 package io.github.aaronr92.rockpaperscissorsserver.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -17,7 +14,8 @@ import java.time.LocalDateTime;
 public class Player {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(generator = "playerSeq")
+    @SequenceGenerator(name = "playerSeq", sequenceName = "PLAYER_SEQ", allocationSize = 1)
     private long id;
 
     private String login;

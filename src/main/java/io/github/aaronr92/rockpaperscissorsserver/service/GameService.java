@@ -26,12 +26,12 @@ public class GameService {
 
     private final Random random = new Random();
     private final GameStepAction[] actions = GameStepAction.values();
-    private final Map<String, Long> playersMap = new HashMap<>();
+    private final Map<Integer, Long> playersMap = new HashMap<>();
 
     public void startGame(
             String login,
             String password,
-            String playerRemoteAddress,
+            int connectionId,
             Connection connection
     ) {
         var playerOptional = playerService.getPlayerByLoginAndPassword(login, password);
@@ -46,9 +46,10 @@ public class GameService {
         if (currentGameOptional.isPresent()) {
             var currentGame = currentGameOptional.get();
             if (currentGame.getFinishState() == null) {
+                connection.sendTCP(new ServerboundGameStartPacket(player.getId()));
                 continueGame(currentGame, player.getId(), connection);
 
-                playersMap.put(playerRemoteAddress, player.getId());
+                playersMap.put(connectionId, player.getId());
                 return;
             }
         }
@@ -61,7 +62,7 @@ public class GameService {
         connection.sendTCP(new ServerboundGameStartPacket(player.getId()));
         timerTaskService.createTimerTask(player.getId(), connection);
 
-        playersMap.put(playerRemoteAddress, player.getId());
+        playersMap.put(connectionId, player.getId());
 
         gameRepo.save(game);
     }
@@ -78,23 +79,20 @@ public class GameService {
         if (game.getGameStep1Player() == null) {
             game.setGameStep1Player(action);
             var serverAction = getServerAction();
-            System.out.println("Server action is "+ serverAction);
             game.setGameStep1Server(serverAction);
 
-            timerTaskService.updateTimerTask(playerId, connection);
             sendRoundResultToPlayer(serverAction, connection);
+            timerTaskService.updateTimerTask(playerId, connection);
         } else if (game.getGameStep2Player() == null) {
             game.setGameStep2Player(action);
             var serverAction = getServerAction();
-            System.out.println("Server action is "+ serverAction);
             game.setGameStep2Server(serverAction);
 
-            timerTaskService.updateTimerTask(playerId, connection);
             sendRoundResultToPlayer(serverAction, connection);
+            timerTaskService.updateTimerTask(playerId, connection);
         } else if (game.getGameStep3Player() == null) {
             game.setGameStep3Player(action);
             var serverAction = getServerAction();
-            System.out.println("Server action is "+ serverAction);
             game.setGameStep3Server(serverAction);
             timerTaskService.removeTimerTask(playerId);
 
@@ -131,13 +129,13 @@ public class GameService {
         gameRepo.save(game);
     }
 
-    public void disconnect(String playerRemoteAddress) {
-        long playerId = playersMap.get(playerRemoteAddress);
-        var player = playerService.getPlayerById(playerId);
+    public void disconnect(int connectionId) {
+        Long playerId = playersMap.remove(connectionId);
 
-        if (!timerTaskService.isPlayerInGame(playerId))
+        if (playerId == null || !timerTaskService.isPlayerInGame(playerId))
             return;
 
+        var player = playerService.getPlayerById(playerId);
         var task = timerTaskService.removeTimerTask(playerId);
 
         Game game = gameRepo.findFirstByPlayerOrderByIdDesc(player).get();
