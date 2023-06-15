@@ -5,13 +5,14 @@ To play the game you also need to download [client](https://github.com/AaronR92/
 ## Configuration
 1. Clone this repo ``git clone https://github.com/AaronR92/Rock-Paper-Scissors-Server.git``
 2. Open ``resources/application.yaml``
-3. Change your database credentials and url
+3. Run in your database query console ``CREATE DATABASE <YourDatabaseName>;``, tables will generate automatically when app will be started
+4. Change your database credentials and url
 ```yaml
 spring:
   datasource:
     username: YourDatabaseUsername
     password: YourDatabasePassword
-    url: YourDatabaseURL
+    url: jdbc:mysql://YourDatabaseURL/YourDatabaseName
 ```
 #### You can also specify applications TCP port updating application.tcp value
 
