@@ -23,18 +23,6 @@ public class GameTimerTaskService {
     private final EventPublisher eventPublisher;
 
     /**
-     * Closes connection after specified delay
-     * @param connection to be closed
-     * @param delay to close connection after
-     */
-    public void closeConnectionAfter(Connection connection, int delay) {
-        taskScheduler.schedule(
-                connection::close,
-                Instant.now().plusSeconds(delay)
-        );
-    }
-
-    /**
      * Checks whether player in taskMap or not
      * @param playerId id of player that plays game
      * @return true if still in game
